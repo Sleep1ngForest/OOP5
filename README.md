@@ -1,14 +1,82 @@
-Объектно-ориентированное программирование (семинары)
-Урок 5. От простого к практике
-Реализуйте удаление пользователей. Вынести логику dao в слой репозитория, а от слоя dao избавится физически(перенести нужный код в класс репозитория, а пакет dao удалить).
+Задание.
 
-Внесенные изменения
+Реализуйте удаление пользователей.
 
-Косметическое изменение формата вывода toString() в классеUser.java.
-В классе UserController добавлен метод deleteUser для удаления записи. Реализация метода выполнена в классе UserRepository. При удалении записи все id переписываются, чтобы они шли по порядку (в условии задачи не сказано о необходимости сохранения id. Сохранение id целесообразно при использовании в БД в связанных таблицах. Использование записной книги не предполагает этого).
-В интерфейс Mapper добавлен абстрактный метод convertToListStr (как вспомогательный), который конвертирует список с типом данных User в список с типом данных String. Метод реализован в классе UserMapper.
-Логика dao вынесена в Repository (Данная логика в MVC подпадает под model).
-В классе UserView добавлена обработка пробрасываемых из других классов исключений для предотвращения аварийного завершения. Также добавлена обработка исключения IllegalArgumentException для enumerator и выводится сообщение с названием команды для просмотра списка всех команд.
-В методе Run класса UserView внесены изменения в части использования одних переменных. В команду UPDATE добавлено предварительное считывание данных редактируемой записи и проверка его наличия до начала ввода новых данных.
-Реализована команда LIST.
-В методе createUser класса UserView добавлена логика, которая позволяет определить необходимость проверки на ввод пустого значения, т.к. для UPDATE допускается ввод пустых полей.
+Подумать, где должен находиться метод createUser из UserView и если получится, вынести его в нужный слой.
+
+Вынести логику dao в нужный слой (репозиторий), а от слоя dao избавится физически. ВАЖНО: ознакомиться с статьей: [https://habr.com/ru/articles/263033](https://javarush.com/groups/posts/2536-chastjh-7-znakomstvo-s-patternom-mvc-model-view-controller)/
+
+На выбор (не обязательно):
+
+1. проанализировать проект и реализовать нереализованные методы.
+
+2. дописать код для оставшихся команд в Commands (можно реализовать сохранение списка USer)
+ИЛИ ВНЕСИТЕ СВОИ ИЗМЕНЕНИЯ В ПРОЕКТ, КОТОРЫЕ КАЖУТЬСЯ ЛОГИЧНЫМИ ВАМ.
+
+РЕАЛИЗАЦИЯ
+
+1. УДАЛЕНИЕ ПОЛЬЗОВАТЕЛЕЙ
+2. 
+3. В UserRepository(repository) переопределяем метод public boolean delete(Long id)
+4. 
+5. В UserController(controller) прописываем метод public boolean deleteUser(Long userid)
+6. 
+7. В UserView(view) добавляем стр 44-47 команда DELETE
+
+8. 
+2. ПОДУМАТЬ, ГДЕ ДОЛЖЕН НАХОДИТЬСЯ МЕТОД createUser ИЗ UserView И ВЫНЕСТИ ЕГО В НУЖНЫЙ СЛОЙ
+3. 
+     Перенесла в UserController(controller). Сделала метод из private в public и добавила метод private String scan(String message)
+   
+     В UserView необходимо внести изменения в строку 28 и 50: userController.createUser()
+   
+3.Вынести логику dao в нужный слой (репозиторий), а от слоя dao избавится физически.
+
+Слой dao логичнее всего перенести в repository
+
+1.Из интерфейса Operation необходимо все команды перенести в интерфейс GBRepository
+
+2.Далее перенести код из FileOperation в UserRepository
+
+Кусок кода в UserRepository, который был до изменений:
+
+public class UserRepository implements GBRepository {
+    private final UserMapper mapper;
+    private final FileOperation operation;
+    public UserRepository(FileOperation operation) {
+        this.mapper = new UserMapper();
+        this.operation = operation;
+    }
+    
+    После изменений код бужет выглядеть так:
+    
+    public class UserRepository implements GBRepository {
+    private final UserMapper mapper;
+    private final String fileName;
+    public UserRepository(String fileName) {
+        this.fileName = fileName;
+        this.mapper = new UserMapper();
+        try (FileWriter writer = new FileWriter(fileName, true)) {
+            writer.flush();
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+    
+Код из FileOperation в части методов readAll и saveAll переносится в UserRepository без изменений копированием
+
+3. В Main изменятся строки:
+4. 
+FileOperation fileOperation = new FileOperation(DB_PATH);
+GBRepository repository = new UserRepository(fileOperation);
+
+В измененном виде останется 
+
+GBRepository repository = new UserRepository(DB_PATH);
+
+6. во всем проекте убиваем import notebook.model.dao.impl.FileOperation;
+7. 
+8. удаляем слой dao
+9. 
+10. тестируем Main на работоспособность - у меня все получилось!
+11. 
